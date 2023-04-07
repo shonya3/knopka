@@ -13,6 +13,7 @@ export const usePeer = () => {
 				try {
 					await appWindow.maximize();
 					await appWindow.setFullscreen(true);
+					await appWindow.show();
 				} catch (err) {
 					console.log(err);
 				}
