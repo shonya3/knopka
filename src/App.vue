@@ -19,10 +19,15 @@ peer.value.on('open', (peerId: string) => (myId.value = peerId));
 </script>
 
 <template>
-	<div v-if="connected" class="connected-buttons">
-		<BaseButton @click="minimize">Minimize</BaseButton>
-		<PingButton @click="onPingButtonClick" :canPing="canPing" :canPingTimeout="canPingTimeout" />
-	</div>
+	<div v-if="connected" class="connected-buttons"></div>
+	<BaseButton class="minimize" v-if="connected" @click="minimize">Minimize</BaseButton>
+	<PingButton
+		class="main-item"
+		v-if="connected"
+		@click="onPingButtonClick"
+		:canPing="canPing"
+		:canPingTimeout="canPingTimeout"
+	/>
 
 	<ConnectForm
 		v-if="!connected"
@@ -33,12 +38,17 @@ peer.value.on('open', (peerId: string) => (myId.value = peerId));
 </template>
 
 <style scoped>
-.connected-buttons {
-	margin-inline: auto;
-	margin-top: 1rem;
-	display: flex;
-	align-items: center;
-	max-width: 300px;
-	gap: 2rem;
+.main-item {
+	position: absolute;
+	display: block;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.minimize {
+	position: absolute;
+	top: 1rem;
+	right: 1rem;
 }
 </style>
