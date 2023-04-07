@@ -45,6 +45,10 @@
 				"height": 600,
 				"alwaysOnTop": true
 			}
-		]
+		],
+		"systemTray": {
+			"iconPath": "icons/icon.png",
+			"iconAsTemplate": true
+		}
 	}
 }
