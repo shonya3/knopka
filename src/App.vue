@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed, onMounted, watch } from 'vue';
 import { minimize, connect } from './lib';
 
 import PingButton from './components/PingButton.vue';
@@ -12,13 +12,38 @@ import { useMyId } from './composables/useMyId';
 import { usePeer } from './composables/usePeer';
 
 const receiverIdInput = ref('');
-const { connected, connection, peer, onConnectionOpened } = usePeer();
+const partnerDisconnectedDialog = ref<HTMLDialogElement | null>(null);
+const { connected, connection, peer, onConnectionOpened, isPartnerAlive, partnerLastAliveTimestamp } = usePeer();
 const { canPing, canPingTimeout, onPingButtonClick } = usePingButton(connection);
 const { myId, idCopied, onCopyId } = useMyId();
 peer.value.on('open', (peerId: string) => (myId.value = peerId));
+
+onMounted(() => {
+	console.log(partnerDisconnectedDialog.value);
+});
+
+watch(
+	() => isPartnerAlive.value,
+	(val, oldVal) => {
+		if (val === false && oldVal === true) {
+			partnerDisconnectedDialog.value?.show();
+		}
+	}
+);
+
+const onDialog = () => {
+	connected.value = false;
+	connection.value = null;
+};
 </script>
 
 <template>
+	<dialog ref="partnerDisconnectedDialog">
+		<p>Your partner is disconnected</p>
+		<form @submit="onDialog" method="dialog">
+			<button>OK, back to connect form</button>
+		</form>
+	</dialog>
 	<div v-if="connected" class="connected-buttons"></div>
 	<BaseButton class="minimize" v-if="connected" @click="minimize">Minimize</BaseButton>
 	<PingButton

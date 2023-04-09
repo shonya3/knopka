@@ -1,5 +1,8 @@
 import { DataConnection } from 'peerjs';
 import { Ref, ref } from 'vue';
+import { DataMessage } from '../types';
+import { PING_BUTTON_TIMEOUT } from '../consts';
+import { sendDataMessage } from '../lib';
 
 const disableTimeout = (boolRef: Ref<boolean>, timeout: number) => {
 	boolRef.value = false;
@@ -14,10 +17,9 @@ export const usePingButton = (connection: Ref<DataConnection | null>) => {
 
 	const onPingButtonClick = () => {
 		if (!connection.value) return;
-		connection.value.send({ kind: 'ping' });
-		const timeout = 5000;
-		canPingTimeout.value = timeout / 1000;
-		disableTimeout(canPing, timeout);
+		sendDataMessage(connection.value, { kind: 'red-button' });
+		canPingTimeout.value = PING_BUTTON_TIMEOUT / 1000;
+		disableTimeout(canPing, PING_BUTTON_TIMEOUT);
 
 		const intervalId = setInterval(() => {
 			if (canPing.value) {

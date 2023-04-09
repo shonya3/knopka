@@ -1,29 +1,69 @@
 import Peer, { DataConnection } from 'peerjs';
-import { DataMessage, RefDataConnection, RefPeer } from '../types';
+import { DataMessage, MessageAlive, RefDataConnection, RefPeer } from '../types';
 import { appWindow } from '@tauri-apps/api/window';
-import { ref } from 'vue';
+import { computed, ref } from 'vue';
+import { sendDataMessage, isDataMessage } from '../lib';
+import { CHECK_ALIVE_TIMEOUT } from '../consts';
+
+const isAlive = (lastAliveTimestamp: number, aliveTimeout: number) => {
+	return Date.now() - lastAliveTimestamp < aliveTimeout * 10;
+};
 
 export const usePeer = () => {
-	const onConnectionOpened = (conn: DataConnection) => {
-		connected.value = true;
-		connection.value = conn;
-
-		connection.value.on('data', async data => {
-			if ((data as DataMessage).kind === 'ping') {
-				try {
-					await appWindow.maximize();
-					await appWindow.setFullscreen(true);
-					await appWindow.show();
-				} catch (err) {
-					console.log(err);
-				}
-			}
-		});
-	};
+	const partnerLastAliveTimestamp = ref<number | null>(null);
+	const isPartnerAlive = ref<null | boolean>(null);
 
 	const connected = ref(false);
 	const connection: RefDataConnection = ref(null);
 	const peer: RefPeer = ref(new Peer());
+
+	const onConnectionOpened = (conn: DataConnection) => {
+		connected.value = true;
+		connection.value = conn;
+		partnerLastAliveTimestamp.value = Date.now();
+		isPartnerAlive.value = true;
+
+		const onData = async (data: DataMessage) => {
+			switch (data.kind) {
+				case 'red-button': {
+					try {
+						await appWindow.maximize();
+						await appWindow.setFullscreen(true);
+						await appWindow.show();
+					} catch (err) {
+						console.log(err);
+					} finally {
+						break;
+					}
+				}
+
+				case 'alive': {
+					partnerLastAliveTimestamp.value = Date.now();
+					break;
+				}
+			}
+		};
+
+		const setAliveObservation = () => {
+			const interval = setInterval(() => {
+				if (!connection.value || !isPartnerAlive.value) {
+					clearInterval(interval);
+					return;
+				}
+				sendDataMessage(connection.value, { kind: 'alive' });
+				if (partnerLastAliveTimestamp.value !== null) {
+					isPartnerAlive.value = isAlive(partnerLastAliveTimestamp.value, CHECK_ALIVE_TIMEOUT);
+				}
+			}, CHECK_ALIVE_TIMEOUT);
+		};
+
+		connection.value.on('data', async data => {
+			if (!isDataMessage(data)) return;
+			onData(data);
+		});
+
+		setAliveObservation();
+	};
 
 	peer.value.on('connection', onConnectionOpened);
 
@@ -32,5 +72,7 @@ export const usePeer = () => {
 		connection,
 		peer,
 		onConnectionOpened,
+		isPartnerAlive,
+		partnerLastAliveTimestamp,
 	};
 };
