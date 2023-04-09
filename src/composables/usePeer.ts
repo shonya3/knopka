@@ -15,6 +15,10 @@ export const usePeer = () => {
 
 	const connected = ref(false);
 	const connection: RefDataConnection = ref(null);
+	const disconnectionTimeString = computed(() => {
+		if (partnerLastAliveTimestamp.value == null) return null;
+		return `time: ${new Date(partnerLastAliveTimestamp.value).toLocaleTimeString('ru')}`;
+	});
 	const peer: RefPeer = ref(new Peer());
 
 	const onConnectionOpened = (conn: DataConnection) => {
@@ -74,5 +78,6 @@ export const usePeer = () => {
 		onConnectionOpened,
 		isPartnerAlive,
 		partnerLastAliveTimestamp,
+		disconnectionTimeString,
 	};
 };

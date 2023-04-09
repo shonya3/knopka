@@ -13,7 +13,15 @@ import { usePeer } from './composables/usePeer';
 
 const receiverIdInput = ref('');
 const partnerDisconnectedDialog = ref<HTMLDialogElement | null>(null);
-const { connected, connection, peer, onConnectionOpened, isPartnerAlive, partnerLastAliveTimestamp } = usePeer();
+const {
+	connected,
+	connection,
+	peer,
+	onConnectionOpened,
+	isPartnerAlive,
+	partnerLastAliveTimestamp,
+	disconnectionTimeString,
+} = usePeer();
 const { canPing, canPingTimeout, onPingButtonClick } = usePingButton(connection);
 const { myId, idCopied, onCopyId } = useMyId();
 peer.value.on('open', (peerId: string) => (myId.value = peerId));
@@ -40,6 +48,7 @@ const onDialog = () => {
 <template>
 	<dialog ref="partnerDisconnectedDialog">
 		<p>Your partner is disconnected</p>
+		<p v-if="disconnectionTimeString">{{ disconnectionTimeString }}</p>
 		<form @submit="onDialog" method="dialog">
 			<button>OK, back to connect form</button>
 		</form>
