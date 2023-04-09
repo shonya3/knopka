@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
-import { minimize, connect } from './lib';
+import { minimize, connect, wait } from './lib';
 
 import PingButton from './components/PingButton.vue';
 import BaseButton from './components/BaseButton.vue';
@@ -10,6 +10,8 @@ import ConnectForm from './components/ConnectForm.vue';
 import { usePingButton } from './composables/usePingButton';
 import { useMyId } from './composables/useMyId';
 import { usePeer } from './composables/usePeer';
+import { appWindow } from '@tauri-apps/api/window';
+import { app } from '@tauri-apps/api';
 
 const receiverIdInput = ref('');
 const partnerDisconnectedDialog = ref<HTMLDialogElement | null>(null);
@@ -32,9 +34,17 @@ onMounted(() => {
 
 watch(
 	() => isPartnerAlive.value,
-	(val, oldVal) => {
+	async (val, oldVal) => {
 		if (val === false && oldVal === true) {
 			partnerDisconnectedDialog.value?.show();
+
+			const isVisible = await appWindow.isVisible();
+			if (!isVisible) {
+				await appWindow.show();
+				await appWindow.minimize();
+			}
+
+			await appWindow.requestUserAttention(1);
 		}
 	}
 );
