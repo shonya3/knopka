@@ -3,10 +3,10 @@ import { DataMessage, MessageAlive, RefDataConnection, RefPeer } from '../types'
 import { appWindow } from '@tauri-apps/api/window';
 import { computed, ref } from 'vue';
 import { sendDataMessage, isDataMessage } from '../lib';
-import { CHECK_ALIVE_TIMEOUT } from '../consts';
+import { CHECK_ALIVE_TIMEOUT, NOT_ALIVE_MILLISECONDS } from '../consts';
 
-const isAlive = (lastAliveTimestamp: number, aliveTimeout: number) => {
-	return Date.now() - lastAliveTimestamp < aliveTimeout * 10;
+const isAlive = (lastAliveTimestamp: number) => {
+	return Date.now() - lastAliveTimestamp < NOT_ALIVE_MILLISECONDS;
 };
 
 export const usePeer = () => {
@@ -56,7 +56,7 @@ export const usePeer = () => {
 				}
 				sendDataMessage(connection.value, { kind: 'alive' });
 				if (partnerLastAliveTimestamp.value !== null) {
-					isPartnerAlive.value = isAlive(partnerLastAliveTimestamp.value, CHECK_ALIVE_TIMEOUT);
+					isPartnerAlive.value = isAlive(partnerLastAliveTimestamp.value);
 				}
 			}, CHECK_ALIVE_TIMEOUT);
 		};
